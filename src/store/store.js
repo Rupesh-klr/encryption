@@ -13,7 +13,18 @@ const persistConfig = {
   key: 'vault-root',
   storage: storage,
   // ⚠️ CHANGE 1: Added 'masterKey' here so it stays after refresh
-  whitelist: ['driveLink', 'customFilename', 'history', 'bookmarks', 'masterKey'], 
+  whitelist:
+  [
+    'driveLink', 
+    'customFilename', 
+    'history', 
+    'bookmarks', 
+    'masterKey', 
+    'originalText',
+    'maxLocalRecords',
+    'maxCloudRecords',
+    'maxDisplayRecords'
+  ],
   blacklist: ['status'] // Only 'status' (loading/idle) should reset on refresh
 };
 

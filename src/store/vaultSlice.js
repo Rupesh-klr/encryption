@@ -22,7 +22,10 @@ export const saveToDrive = createAsyncThunk(
       changed_versiosnid: state.history.length > 0 ? state.history[0].id : "INIT",
       filename: state.customFilename || "chunk-default", 
       folderId: state.driveLink,
-      authToken: "rupesh-secure-token-2026"
+      authToken: "rupesh-secure-token-2026",
+      // 👇 NEW: SEND SETTINGS TO BACKEND
+      maxLocalRecords: state.maxLocalRecords,
+      max_cloud_limit: state.maxCloudRecords
     };
 
     try {

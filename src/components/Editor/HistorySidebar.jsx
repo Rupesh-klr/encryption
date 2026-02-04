@@ -1,62 +1,55 @@
 import { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { FaHistory, FaExclamationTriangle, FaInfoCircle, FaCheckCircle } from 'react-icons/fa';
+import { FaHistory, FaExclamationTriangle, FaInfoCircle, FaCheckCircle, FaTimes } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'react-hot-toast';
-import { updateEditorContent } from '../../store/vaultSlice'; // 👈 Import Action
+import { updateEditorContent } from '../../store/vaultSlice'; 
 import { decryptData } from '../../utils/encryption';
 
 const HistorySidebar = () => {
   const dispatch = useDispatch();
   const { history, failedRequests, maxDisplayRecords, masterKey } = useSelector((state) => state.vault);
   
-  // 1. FIX: Re-added missing state
   const [selectedInfo, setSelectedInfo] = useState(null);
   const [activeVersion, setActiveVersion] = useState(null);
 
-  // 2. FEATURE: Handle Click to Restore
   const handleRestore = (record) => {
     try {
       if (!record.payload) throw new Error("Empty Payload");
 
-      // --- DECRYPTION SIMULATION ---
-      // In a real app, you would do: 
-      // const bytes = AES.decrypt(record.payload, masterKey);
-      // const originalText = bytes.toString(enc.Utf8);
-      // 🔐 DECRYPT LOGIC
-      // The utility handles the "ENCP::" check internally
-      
-      // For now, since we store plain text (as per your last request), we just check if it exists.
-      const originalText = record.payload; 
+      // 1. Decrypt (Utility handles "ENCP::" prefix check automatically)
+      const plainText = decryptData(record.payload, masterKey);
 
-      if (!originalText) {
-        throw new Error("Decryption yielded empty result");
+      // 2. Validate Result
+      if (!plainText && plainText !== "") {
+        throw new Error("Decryption failed or yielded empty result");
       }
-      const plainText = decryptData(originalText.payload, masterKey);
-      dispatch(updateEditorContent(plainText));
 
-      // ✅ SUCCESS: Update Main Editor
-      // dispatch(updateEditorContent(originalText));
+      // 3. Update Redux (Main Editor)
+      dispatch(updateEditorContent(plainText));
       setActiveVersion(record.version);
-      
-      // Silent success (or minimal feedback)
-      // toast.success(`Restored v${record.version}`); 
 
     } catch (error) {
-      // ❌ FAIL: Show Corrupted Data Toaster
       console.error(error);
-      toast.error(`Record v${record.version} is corrupted or key is wrong!`, {
-        icon: '☠️',
+      toast.error(`Record v${record.version} cannot be decrypted. Check Master Key!`, {
+        icon: '🔐',
         style: { background: '#330000', color: '#ffaaaa', border: '1px solid #ff0000' }
       });
     }
   };
 
   return (
-    <div className="flex flex-col h-full overflow-hidden bg-black/20 border-l border-white/10">
+    // 🎨 RESPONSIVE CONTAINER LOGIC:
+    // 1. <350px: w-full (Default)
+    // 2. 350px-650px: w-[90%] mx-auto (Centered with gap)
+    // 3. >650px (md): w-full (Takes 100% of the sidebar column from App.jsx)
+    <div className="flex flex-col overflow-hidden bg-black/20 border-l border-white/10 
+      w-full min-[350px]:w-[90%] min-[350px]:mx-auto md:w-full 
+      max-h-[600px] md:h-full"
+    >
       
       {/* Header */}
-      <div className="p-3 border-b border-white/10 bg-black/30 backdrop-blur-md flex flex-col gap-2">
+      <div className="p-3 border-b border-white/10 bg-black/30 backdrop-blur-md flex flex-col gap-2 shrink-0">
         <div className="flex justify-between items-center">
             <div className="flex items-center gap-2 text-purple-300">
             <FaHistory />
@@ -75,10 +68,10 @@ const HistorySidebar = () => {
         )}
       </div>
 
-      {/* List Area - Scrolls after ~7 items */}
+      {/* List Area */}
       <div className="flex-1 overflow-y-auto custom-scrollbar p-2 space-y-2">
         
-        {/* 1. FAILED REQUESTS (Red) */}
+        {/* FAILED REQUESTS */}
         {failedRequests.map((fail, idx) => (
            <div key={`fail-${idx}`} className="p-3 rounded-lg border border-red-500/50 bg-red-500/10 text-red-200 text-xs">
               <div className="flex justify-between items-center mb-1">
@@ -89,15 +82,15 @@ const HistorySidebar = () => {
            </div>
         ))}
 
-        {/* 2. SUCCESS HISTORY */}
+        {/* SUCCESS HISTORY */}
         {history.slice(0, maxDisplayRecords).map((record) => (
           <div 
             key={record.id} 
-            onClick={() => handleRestore(record)} // 👈 Click to Restore
+            onClick={() => handleRestore(record)} 
             className={`
-              p-3 rounded-lg border text-xs cursor-pointer transition-all hover:scale-[1.02] group
+              p-3 rounded-lg border text-xs cursor-pointer transition-all hover:scale-[1.02] group relative
               ${activeVersion === record.version 
-                ? 'bg-purple-500/20 border-purple-500/50 ring-1 ring-purple-500' // Highlight Active
+                ? 'bg-purple-500/20 border-purple-500/50 ring-1 ring-purple-500'
                 : record.isNew 
                     ? 'bg-yellow-500/10 border-yellow-500/50 text-yellow-100' 
                     : 'bg-white/5 border-white/10 text-gray-400 hover:bg-white/10'
@@ -109,16 +102,14 @@ const HistorySidebar = () => {
               <span className="opacity-60">{new Date(record.timestamp).toLocaleTimeString()}</span>
             </div>
             
-            {/* Payload Preview */}
             <div className="font-mono bg-black/30 p-2 rounded flex justify-between items-center group-hover:bg-black/50 transition-colors">
               <span className="truncate max-w-[140px] opacity-70">
                 {record.payload ? record.payload.substring(0, 8) : ""}...
               </span>
               
-              {/* Info Button - Opens Popup */}
               <button 
                 onClick={(e) => { 
-                    e.stopPropagation(); // Stop click from restoring
+                    e.stopPropagation(); 
                     setSelectedInfo(record); 
                 }}
                 className="text-white/30 hover:text-blue-400 transition-colors p-1"
@@ -130,40 +121,67 @@ const HistorySidebar = () => {
         ))}
       </div>
 
-      {/* 3. INFO POPUP MODAL */}
+      {/* 🚀 FIX: POPUP MODAL 
+         Changed 'absolute' -> 'fixed' to escape the narrow sidebar.
+         Added 'z-[100]' to ensure it sits on top of everything.
+      */}
       <AnimatePresence>
         {selectedInfo && (
           <motion.div 
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="absolute inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md"
             onClick={() => setSelectedInfo(null)}
           >
             <motion.div 
-                initial={{ scale: 0.9 }} animate={{ scale: 1 }}
-                className="bg-[#1a1a2e] border border-white/20 p-4 rounded-xl shadow-2xl w-full max-w-xs"
+                initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }}
+                className="bg-[#1a1a2e] border border-white/20 rounded-xl shadow-2xl w-[95%] max-w-lg flex flex-col max-h-[90vh]"
                 onClick={(e) => e.stopPropagation()}
             >
-              <h3 className="text-sm font-bold text-white mb-2 flex items-center gap-2">
-                <FaInfoCircle className="text-blue-400"/> Record Details
-              </h3>
+              {/* Modal Header */}
+              <div className="p-4 border-b border-white/10 flex justify-between items-center">
+                <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                  <FaInfoCircle className="text-blue-400"/> Record Details
+                </h3>
+                <button onClick={() => setSelectedInfo(null)} className="text-white/50 hover:text-white transition-colors">
+                    <FaTimes />
+                </button>
+              </div>
               
-              <div className="space-y-2 text-xs text-gray-300 font-mono break-all max-h-[60vh] overflow-y-auto custom-scrollbar">
-                <p><span className="text-purple-400">ID:</span> {selectedInfo.id}</p>
-                <p><span className="text-purple-400">Time:</span> {new Date(selectedInfo.timestamp).toLocaleString()}</p>
-                <p><span className="text-purple-400">Version:</span> {selectedInfo.version}</p>
+              {/* Modal Body (Scrollable) */}
+              <div className="p-6 space-y-4 overflow-y-auto custom-scrollbar">
+                <div className="grid grid-cols-2 gap-4 text-xs font-mono text-gray-400">
+                    <div>
+                        <span className="text-purple-400 block mb-1">Version</span>
+                        <span className="bg-black/30 px-2 py-1 rounded block">{selectedInfo.version}</span>
+                    </div>
+                    <div>
+                        <span className="text-purple-400 block mb-1">Time</span>
+                        <span className="bg-black/30 px-2 py-1 rounded block">{new Date(selectedInfo.timestamp).toLocaleTimeString()}</span>
+                    </div>
+                    <div className="col-span-2">
+                        <span className="text-purple-400 block mb-1">UUID</span>
+                        <span className="bg-black/30 px-2 py-1 rounded block truncate">{selectedInfo.id}</span>
+                    </div>
+                </div>
                 
-                <div className="bg-black/40 p-2 rounded mt-2 border border-white/10">
-                   <span className="text-purple-400 block mb-1 font-bold">Full Payload:</span>
-                   {selectedInfo.payload}
+                <div>
+                   <span className="text-purple-400 block mb-2 font-bold text-xs">Full Encrypted Payload</span>
+                   <div className="bg-black/40 p-4 rounded-lg border border-white/10 text-xs text-gray-300 font-mono break-all leading-relaxed max-h-40 overflow-y-auto custom-scrollbar">
+                       {selectedInfo.payload}
+                   </div>
                 </div>
               </div>
 
-              <button 
-                onClick={() => setSelectedInfo(null)}
-                className="mt-4 w-full bg-white/10 hover:bg-white/20 py-2 rounded text-xs text-white transition-colors"
-              >
-                Close
-              </button>
+              {/* Modal Footer */}
+              <div className="p-4 border-t border-white/10 bg-black/20">
+                <button 
+                    onClick={() => setSelectedInfo(null)}
+                    className="w-full bg-white/10 hover:bg-white/20 py-2 rounded-lg text-sm text-white font-bold transition-colors"
+                >
+                    Close
+                </button>
+              </div>
+
             </motion.div>
           </motion.div>
         )}

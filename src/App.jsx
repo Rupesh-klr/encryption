@@ -117,17 +117,22 @@ function App() {
         </GlassCard>
 
         {/* --- MAIN WORKSPACE --- */}
-        <div className="flex-1 flex gap-4 overflow-hidden h-[80vh]">
-          {/* 65% EDITOR AREA (Actually Flex-Grow) */}
-          <GlassCard className="flex-[0.65] flex flex-col relative group">
+        {/* 👇 REPLACE THIS LINE 👇 */}
+        <div className="flex-1 flex flex-col md:flex-row gap-4 overflow-hidden h-auto md:h-[80vh]">
+          
+          {/* 65% EDITOR AREA */}
+          {/* <GlassCard className="flex-[0.65] flex flex-col relative group h-[60vh] md:h-full"> */}
+          <GlassCard className="flex-[0.65] flex flex-col relative group h-[20vh] md:h-full">
              <div className="absolute top-0 right-0 p-2 bg-black/40 rounded-bl-xl text-[10px] text-gray-400 z-10">EDITOR</div>
              <CodeEditor />
           </GlassCard>
 
-          {/* 35% HISTORY SIDEBAR (Updated Width) */}
-          <GlassCard className="flex-[0.35] flex flex-col overflow-hidden">
+          {/* 35% HISTORY SIDEBAR */}
+          {/* Note: Remove overflow-hidden from parent GlassCard here to let the Sidebar handle its own scrolling */}
+          <GlassCard className="flex-[0.35] flex flex-col h-[70vh] md:h-full">
              <HistorySidebar />
           </GlassCard>
+          
         </div>
       </div>
     </HelmetProvider>
