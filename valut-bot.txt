@@ -1,0 +1,98 @@
+npm install googleapis
+
+const { google } = require('googleapis');
+const path = require('path');
+
+// Load your downloaded JSON key
+// In Next.js, prefer using Environment Variables for the private key and client email!
+const KEYFILEPATH = path.join(__dirname, 'service-account.json');
+const SCOPES = ['https://www.googleapis.com/auth/drive'];
+
+const FOLDER_ID = "17Qghxb1MHobbuJ5uKRUrkSpA9lcY4ZE6"; // Your Folder
+
+// 1. Authenticate
+const auth = new google.auth.GoogleAuth({
+  keyFile: KEYFILEPATH,
+  scopes: SCOPES,
+});
+
+const drive = google.drive({ version: 'v3', auth });
+
+// --- FUNCTION: FETCH RECENT FILES ---
+async function fetchRecentFiles(filenamePrefix) {
+  try {
+    const res = await drive.files.list({
+      q: `'${FOLDER_ID}' in parents and name contains '${filenamePrefix}' and trashed = false`,
+      orderBy: 'createdTime desc', // Sort Newest First
+      pageSize: 3,                 // Take top 3
+      fields: 'files(id, name, createdTime)', // Only ask for fields we need
+    });
+
+    const files = res.data.files;
+    const results = [];
+
+    // Download content for each file
+    for (const file of files) {
+      const content = await drive.files.get({
+        fileId: file.id,
+        alt: 'media', // This tells Drive to download the file content
+      });
+      
+      // Try to parse JSON content
+      let payloadData = content.data;
+      if (typeof payloadData === 'string') {
+          try { payloadData = JSON.parse(payloadData); } catch(e) {}
+      }
+
+      results.push({
+        id: file.id,
+        filename: file.name,
+        timestamp: new Date(file.createdTime).getTime(),
+        payload: payloadData.payload || payloadData // Handle structure variations
+      });
+    }
+
+    return results;
+
+  } catch (error) {
+    console.error('Error fetching files:', error);
+    throw error;
+  }
+}
+
+// --- FUNCTION: UPLOAD NEW FILE ---
+async function uploadFile(jsonData, filenamePrefix) {
+  try {
+    const fileName = `${filenamePrefix}-${Date.now()}.json`;
+    
+    // Create file metadata
+    const fileMetadata = {
+      name: fileName,
+      parents: [FOLDER_ID],
+    };
+
+    // Create media (content)
+    const media = {
+      mimeType: 'application/json',
+      body: JSON.stringify(jsonData, null, 2),
+    };
+
+    const file = await drive.files.create({
+      resource: fileMetadata,
+      media: media,
+      fields: 'id',
+    });
+
+    console.log('File Id:', file.data.id);
+    return file.data.id;
+
+  } catch (error) {
+    console.error('Error uploading file:', error);
+    throw error;
+  }
+}
+
+// --- TEST USAGE ---
+// (Uncomment to test)
+// fetchRecentFiles('chunk').then(console.log);
+key-as-gokgoal-484219-cc343377a994-service-account

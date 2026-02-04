@@ -1,7 +1,7 @@
 import { configureStore } from '@reduxjs/toolkit';
 import { persistStore, persistReducer } from 'redux-persist';
 import vaultReducer from './vaultSlice';
-
+// import storage from 'redux-persist/lib/storage';
 // Manual Storage Wrapper
 const storage = {
   getItem: (key) => Promise.resolve(localStorage.getItem(key)),
@@ -23,7 +23,10 @@ const persistConfig = {
     'originalText',
     'maxLocalRecords',
     'maxCloudRecords',
-    'maxDisplayRecords'
+    'maxDisplayRecords',
+    'isEncryptEnabled',
+    'biometricPrefs', // 👈 SAVE AUTH TIME & INTERVAL
+    'customNetwork'   // 👈 SAVE NETWORK SETTINGS
   ],
   blacklist: ['status'] // Only 'status' (loading/idle) should reset on refresh
 };

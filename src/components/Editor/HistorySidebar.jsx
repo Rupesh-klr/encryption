@@ -43,7 +43,7 @@ const HistorySidebar = () => {
     // 1. <350px: w-full (Default)
     // 2. 350px-650px: w-[90%] mx-auto (Centered with gap)
     // 3. >650px (md): w-full (Takes 100% of the sidebar column from App.jsx)
-    <div className="flex flex-col overflow-hidden bg-black/20 border-l border-white/10 
+    <div className="min-h-[600px]  flex flex-col overflow-hidden bg-black/20 border-l border-white/10 
       w-full min-[350px]:w-[90%] min-[350px]:mx-auto md:w-full 
       max-h-[600px] md:h-full"
     >

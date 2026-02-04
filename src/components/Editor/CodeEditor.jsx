@@ -77,7 +77,7 @@ const CodeEditor = () => {
 
   return (
     <div className={`
-      flex flex-col min-h-[500px] h-full relative bg-[#0d0d15] rounded-xl overflow-hidden border border-white/10 shadow-2xl
+      flex flex-col min-h-[750px] h-full relative bg-[#0d0d15] rounded-xl overflow-hidden border border-white/10 shadow-2xl
       w-full min-[350px]:w-[90%] min-[350px]:mx-auto md:w-full md:mx-0
     `}>
       

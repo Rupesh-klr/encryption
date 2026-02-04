@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { FaFingerprint, FaLock } from 'react-icons/fa';
 import { toast } from 'react-hot-toast';
+import { useDispatch, useSelector } from 'react-redux';
+import { recordBiometricAuth } from '../../store/vaultSlice';
 
 // ⚙️ CONFIGURATION FLAG
 // Set this to FALSE when you want to disable the lock during testing
@@ -9,20 +11,51 @@ const ENABLE_SCREEN_LOCK = true; // or import.meta.env.VITE_ENABLE_LOCK === 'tru
 const BiometricGate = ({ children }) => {
   const [isUnlocked, setIsUnlocked] = useState(false);
   const [loading, setLoading] = useState(false);
+  const dispatch = useDispatch();
+  // Read prefs from Redux
+  const { biometricPrefs } = useSelector(state => state.vault);
+  // Helper: Calculate if Auth is needed
+  const isAuthRequired = () => {
+    if (!ENABLE_SCREEN_LOCK) return false;
+    
+    const { interval, lastAuthTime } = biometricPrefs;
+    if (interval === 'always') return true;
+    if (!lastAuthTime) return true;
+
+    const now = Date.now();
+    const elapsed = now - lastAuthTime;
+    
+    // Time Constants in ms
+    const ONE_HOUR = 60 * 60 * 1000;
+    const ONE_DAY = 24 * ONE_HOUR;
+
+    let maxDuration = 0;
+    switch(interval) {
+        case '24h': maxDuration = ONE_DAY; break;
+        case '48h': maxDuration = 2 * ONE_DAY; break;
+        case '72h': maxDuration = 3 * ONE_DAY; break;
+        case '1w':  maxDuration = 7 * ONE_DAY; break;
+        case '2w':  maxDuration = 14 * ONE_DAY; break;
+        case '1m':  maxDuration = 30 * ONE_DAY; break;
+        default: return true; // 'always'
+    }
+
+    // If time elapsed is greater than allowed, we lock
+    return elapsed > maxDuration;
+  };
 
   // Helper: Convert string to Uint8Array for WebAuthn
   const strToBin = (str) => Uint8Array.from(atob(str), c => c.charCodeAt(0));
   const binToStr = (bin) => btoa(String.fromCharCode(...new Uint8Array(bin)));
 
-  useEffect(() => {
-    // 1. Bypass if disabled
-    if (!ENABLE_SCREEN_LOCK) {
-      setIsUnlocked(true);
-      return;
-    }
-
-    // 2. Try to unlock immediately on load
-    triggerBiometricPrompt();
+    useEffect(() => {
+        // 1. Bypass if disabled
+        if (!isAuthRequired()) {
+            setIsUnlocked(true);
+        } else {
+            // 2. Try to unlock immediately on load
+            triggerBiometricPrompt();
+        }
   }, []);
 
   const triggerBiometricPrompt = async () => {
@@ -60,10 +93,12 @@ const BiometricGate = ({ children }) => {
         
         // Save ID for next time
         const newCredId = binToStr(credential.rawId);
+
         localStorage.setItem('vault_auth_cred_id', newCredId);
         
         toast.success("Device Security Linked!");
         setIsUnlocked(true);
+        
 
       } else {
         // --- CASE B: RETURNING USER (VERIFY) ---
@@ -81,6 +116,9 @@ const BiometricGate = ({ children }) => {
         // If code reaches here, OS verified the user
         setIsUnlocked(true);
       }
+      dispatch(recordBiometricAuth()); // Update Redux timestamp
+      setIsUnlocked(true);
+      toast.success("Identity Verified");
 
     } catch (error) {
       console.error("Auth Failed:", error);
@@ -122,7 +160,16 @@ const BiometricGate = ({ children }) => {
           {loading ? "Verifying..." : "Unlock with System Password"}
         </button>
 
+
       </div>
+      {/* ... Lock Screen UI ... */}
+       <div className="bg-white/5 p-8 rounded-2xl flex flex-col items-center">
+          <FaLock className="text-4xl text-red-500 mb-4 animate-pulse"/>
+          <h2 className="text-xl font-bold mb-4">Vault Locked</h2>
+          <button onClick={triggerBiometricPrompt} className="bg-blue-600 px-6 py-2 rounded-lg font-bold">
+            {loading ? "Verifying..." : "Unlock"}
+          </button>
+       </div>
     </div>
   );
 };

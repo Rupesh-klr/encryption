@@ -10,13 +10,13 @@ import SecureInput from './components/ui/SecureInput';
 import CodeEditor from './components/Editor/CodeEditor';
 import HistorySidebar from './components/Editor/HistorySidebar';
 import SettingsModal from './components/ui/SettingsModal'; // Import Modal
-import { setDriveLink, setMasterKey, saveToDrive } from './store/vaultSlice';
+import { setDriveLink, setMasterKey, saveToDrive, refreshFromDrive } from './store/vaultSlice';
 import { useInactivityTimer } from './hooks/useInactivityTimer';
 import { encryptData } from './utils/encryption';
 
 function App() {
   const dispatch = useDispatch();
-  const { driveLink, masterKey, status, originalText, customFilename,isEncryptEnabled } = useSelector(state => state.vault);
+  const { driveLink, masterKey,refreshStatus, status, originalText, customFilename,isEncryptEnabled } = useSelector(state => state.vault);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   useInactivityTimer(30000);
@@ -37,11 +37,26 @@ function App() {
     dispatch(saveToDrive(payloadToSend));
   };
 
+  // const handleRefresh = () => {
+  //   toast("Refreshing is coming soon...", {
+  //     icon: '⏳',
+  //     style: { borderRadius: '10px', background: '#333', color: '#fff' },
+  //   });
+  // };
+
   const handleRefresh = () => {
-    toast("Refreshing is coming soon...", {
-      icon: '⏳',
-      style: { borderRadius: '10px', background: '#333', color: '#fff' },
-    });
+    if (!driveLink) return toast.error("Drive Link is missing!");
+    
+    // Dispatch the Refresh Action
+    dispatch(refreshFromDrive())
+      .unwrap()
+      .then((files) => {
+         const count = files ? files.length : 0;
+         toast.success(`Synced ${count} recent files from Cloud`);
+      })
+      .catch((err) => {
+         toast.error(`Sync Failed: ${err}`);
+      });
   };
 
   return (
@@ -107,11 +122,22 @@ function App() {
              </button>
 
              {/* 3. REFRESH */}
-             <button 
+             {/* <button 
                 onClick={handleRefresh}
                 className="bg-blue-600/80 hover:bg-blue-500 px-4 py-2 h-10 rounded-lg flex items-center gap-2 font-bold backdrop-blur-sm transition-all text-sm"
              >
                <FaSync /> Refresh
+             </button> */}
+             {/* 3. REFRESH BUTTON */}
+             <button 
+                onClick={handleRefresh}
+                disabled={refreshStatus === 'loading'}
+                className={`bg-blue-600/80 hover:bg-blue-500 px-4 py-2 h-10 rounded-lg flex items-center gap-2 font-bold backdrop-blur-sm transition-all text-sm
+                  ${refreshStatus === 'loading' ? 'opacity-50 cursor-not-allowed' : ''}
+                `}
+             >
+               {refreshStatus === 'loading' ? <FaSync className="animate-spin"/> : <FaSync />} 
+               Refresh
              </button>
           </div>
         </GlassCard>
