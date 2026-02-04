@@ -1,0 +1,51 @@
+recall for this you mentioned missed to give two compement HistorySidebar & useInactivityTimer &is we need to send from which verison is latest version got changed? and help me know to build the front code where i need a screen in vite all install comand for make glass cooleffect and text typing and blinding effect npm modules. pages
+
+this only code so we need to add broswe cokking mangesment helment and redex handleing thing and folder hook and now root and folder for compoients and the screen should have button to update to data base but still at that point store all changes in local and a button to refresh where it will start pull any missind changes publish some where where those new changes should hight as yellow one main thing, and input to store to store maxmium of history records,by default it should be 1, maximum should be 500,. and input field a compent for key adding and where default it should in non visiable but an eye in the input can help user to see the key after 5 sec the visable text convert hide are after even after user left the inout field are no screen are any performed for few sec like 30 sec in screen. any blank of link input. is by default the give our folder if user provided any drive edit folder we need to send that data. of the form field in top area. in botton main section we can able to 65(showing the changes) and 25(to show the histrory records. with first 8char and info button that popup and the data object and encrptyed message). this 25% can either sort by perviouse to latest where. this need can be lazy load later but creat and make comment that.now. the right main 65% is for the showing original text user can able to edit it we need to make line number and vertical scrollable. able to add redpoint when click on line it should togglt as bookmark in vscode. this every line should have that toggle button. the redux we need to store the detaisl input link and current origign data and all set of histroy record. this records cont should be 500 new refresh brought 3 new record latest than now. we need to simple delete older records. i have getting 
+
+
+This is a sophisticated "Offline-First" Secure Vault application. You are effectively building a mini-VS Code with Git capabilities inside the browser, secured by encryption.
+
+Here is the complete Architecture, Installation Commands, and Code to build this.
+
+📦 Phase 1: Installation & Setup
+Run these commands in your terminal to install the necessary "Glassmorphism" UI libraries, State Management (Redux), and Utilities.
+
+Bash
+# 1. State Management & Utils
+npm install @reduxjs/toolkit react-redux axios crypto-js uuid date-fns react-helmet-async
+
+# 2. UI & Animations (Glass effect, Typing, Icons)
+npm install framer-motion react-icons clsx tailwind-merge
+
+# 3. Setup Tailwind (If not already installed)
+npm install -D tailwindcss postcss autoprefixer
+npx tailwindcss init -p
+📂 Phase 2: Folder Structure
+Create this structure to keep your "Hooks", "Redux", and "Components" organized.
+
+Plaintext
+src/
+├── assets/
+├── components/
+│   ├── ui/
+│   │   ├── GlassCard.jsx        (The cool glass effect wrapper)
+│   │   └── SecureInput.jsx      (Password input with auto-hide timer)
+│   ├── Editor/
+│   │   ├── CodeEditor.jsx       (65% Main Area - Line numbers & bookmarks)
+│   │   └── HistorySidebar.jsx   (25% Sidebar - Encrypted blobs)
+│   └── TopBar.jsx               (Folder ID & Sync Buttons)
+├── hooks/
+│   └── useInactivityTimer.js    (Auto-lock logic)
+├── store/
+│   ├── store.js
+│   └── vaultSlice.js            (Redux: Handles 500 limit, Sync, Data)
+├── utils/
+│   └── encryption.js            (CryptoJS logic)
+├── App.jsx
+└── main.jsx
+🧠 Phase 3: Redux Store (The Brain)
+This handles the "500 Limit," "Version History," and "Syncing."
+
+File: src/store/vaultSlice.js
+
+
